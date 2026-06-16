@@ -43,7 +43,11 @@ const elements = {
     
     // New Elements
     themeToggle: document.getElementById('theme-toggle'),
-    exportCsvBtn: document.getElementById('export-csv-btn')
+    exportCsvBtn: document.getElementById('export-csv-btn'),
+    searchClear: document.getElementById('search-clear'),
+    toastNotification: document.getElementById('toast-notification'),
+    toastMessage: document.getElementById('toast-message'),
+    trimTweetBtn: document.getElementById('trim-tweet')
 };
 
 // Initialize App
@@ -82,10 +86,23 @@ function setupEventListeners() {
     }
     
     // Filters
-    elements.searchInput.addEventListener('input', (e) => {
-        state.filters.search = e.target.value.toLowerCase();
+    elements.searchInput.addEventListener('input', debounce((e) => {
+        const val = e.target.value;
+        state.filters.search = val.toLowerCase();
+        if (elements.searchClear) {
+            elements.searchClear.style.display = val ? 'flex' : 'none';
+        }
         render();
-    });
+    }, 150));
+    
+    if (elements.searchClear) {
+        elements.searchClear.addEventListener('click', () => {
+            elements.searchInput.value = '';
+            state.filters.search = '';
+            elements.searchClear.style.display = 'none';
+            render();
+        });
+    }
     
     elements.typeFilter.addEventListener('change', (e) => {
         state.filters.type = e.target.value;
@@ -115,6 +132,12 @@ function setupEventListeners() {
         hideTweetModal();
     });
     
+    if (elements.trimTweetBtn) {
+        elements.trimTweetBtn.addEventListener('click', () => {
+            autoTrimTweetText();
+        });
+    }
+    
     elements.tweetSelectedBtn.addEventListener('click', () => {
         openTweetModalForSelection();
     });
@@ -140,6 +163,7 @@ async function loadReleases() {
         elements.lastUpdatedTime.textContent = `Refreshed at ${now.toLocaleTimeString()}`;
         
         render();
+        showToast('Release notes feed updated! ⚡');
     } catch (error) {
         console.error('Error fetching release notes:', error);
         elements.errorMessage.textContent = error.message || 'Could not connect to the release feed service.';
@@ -286,6 +310,7 @@ function createReleaseDayDOM(dayRelease, matchedUpdates) {
             navigator.clipboard.writeText(update.text).then(() => {
                 copyBtn.innerHTML = '✔';
                 copyBtn.classList.add('copied');
+                showToast('Copied update to clipboard! 📋');
                 setTimeout(() => {
                     copyBtn.innerHTML = '📋';
                     copyBtn.classList.remove('copied');
@@ -310,7 +335,7 @@ function createReleaseDayDOM(dayRelease, matchedUpdates) {
         // Body (HTML description)
         const cardBody = document.createElement('div');
         cardBody.className = 'update-body';
-        cardBody.innerHTML = update.html;
+        cardBody.innerHTML = highlightKeywords(update.html, state.filters.search);
         
         // Prevent clicking links in the body from selecting the card
         cardBody.querySelectorAll('a').forEach(link => {
@@ -319,8 +344,19 @@ function createReleaseDayDOM(dayRelease, matchedUpdates) {
         
         card.appendChild(cardBody);
         
+        // Accessibility & Keyboard Toggle
+        card.setAttribute('tabindex', '0');
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleSelectUpdate(update, dayRelease.title);
+            }
+        });
+        
         // Card Click Handler (Select/Deselect)
         card.addEventListener('click', () => {
+            const selectedText = window.getSelection().toString();
+            if (selectedText) return; // Selection guard
             toggleSelectUpdate(update, dayRelease.title);
         });
         
@@ -390,11 +426,13 @@ function updateCharCount(text) {
         elements.charWarn.style.display = 'block';
         elements.publishTweet.disabled = true;
         elements.publishTweet.style.opacity = '0.5';
+        if (elements.trimTweetBtn) elements.trimTweetBtn.style.display = 'block';
     } else {
         elements.charCounter.style.color = len > 260 ? 'var(--accent-change)' : 'var(--text-muted)';
         elements.charWarn.style.display = 'none';
         elements.publishTweet.disabled = false;
         elements.publishTweet.style.opacity = '1';
+        if (elements.trimTweetBtn) elements.trimTweetBtn.style.display = 'none';
     }
 }
 
@@ -441,7 +479,7 @@ function openTweetModalForSelection() {
 // Export filtered updates to CSV
 function exportToCSV() {
     if (state.releases.length === 0) {
-        alert('No data to export.');
+        showToast('No data to export! 📂');
         return;
     }
     
@@ -488,7 +526,7 @@ function exportToCSV() {
     });
     
     if (csvRows.length <= 1) {
-        alert('No filtered updates match the criteria to export.');
+        showToast('No matching updates found to export! 🔍');
         return;
     }
     
@@ -502,4 +540,78 @@ function exportToCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showToast('Exported CSV file successfully! 📥');
+}
+
+// ==========================================================================
+// UX Polished Helpers (Debouncer, Highlighting, Auto-Trim, Toast Notifier)
+// ==========================================================================
+
+// Debounce helper for inputs
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Regex search highlight helper (outside of tag attributes)
+function highlightKeywords(html, query) {
+    if (!query) return html;
+    try {
+        const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        const regex = new RegExp(`(?![^<>]*>)(${escapedQuery})`, 'gi');
+        return html.replace(regex, '<mark class="highlight">$1</mark>');
+    } catch (e) {
+        console.error('Highlight regex error:', e);
+        return html;
+    }
+}
+
+// Toast notification trigger
+let toastTimeout;
+function showToast(message) {
+    if (!elements.toastNotification || !elements.toastMessage) return;
+    
+    elements.toastMessage.textContent = message;
+    elements.toastNotification.classList.add('show');
+    
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => {
+        elements.toastNotification.classList.remove('show');
+    }, 2500);
+}
+
+// Auto-trim long tweet text to satisfy 280-char limit
+function autoTrimTweetText() {
+    let text = elements.tweetTextarea.value;
+    if (text.length <= 280) return;
+    
+    // Find suffix/hashtags (e.g. " #BigQuery")
+    const hashtagRegex = /\s(#[A-Za-z0-9]+(\s#[A-Za-z0-9]+)*)$/;
+    const match = text.match(hashtagRegex);
+    
+    let suffix = "";
+    let mainBody = text;
+    
+    if (match) {
+        suffix = match[0];
+        mainBody = text.substring(0, text.length - suffix.length);
+    }
+    
+    const maxBodyLen = 280 - suffix.length - 3; // -3 for '...'
+    
+    if (maxBodyLen > 0 && mainBody.length > maxBodyLen) {
+        mainBody = mainBody.substring(0, maxBodyLen) + "...";
+    }
+    
+    const trimmedText = mainBody + suffix;
+    elements.tweetTextarea.value = trimmedText;
+    updateCharCount(trimmedText);
+    showToast("Tweet text auto-trimmed! ✂️");
 }

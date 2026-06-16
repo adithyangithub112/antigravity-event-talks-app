@@ -47,12 +47,12 @@
                 </button>
             </div>
         </header>
-
         <!-- Control Panel -->
         <section class="control-panel" id="controls">
             <div class="search-wrapper">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="search-input" placeholder="Search updates (e.g. Gemini, SQL, export)..." aria-label="Search updates">
+                <span id="search-clear" class="search-clear" style="display: none;" title="Clear search">&times;</span>
             </div>
             
             <div class="filter-wrapper">
@@ -82,9 +82,18 @@
         <!-- Main Feed -->
         <main class="feed-container">
             <!-- Loading State -->
-            <div id="feed-loading" class="state-container">
-                <div class="large-spinner"></div>
-                <p>Fetching BigQuery release notes...</p>
+            <div id="feed-loading" class="state-container-loading">
+                <div class="skeleton-card">
+                    <div class="skeleton-header"><div class="skeleton-badge"></div><div class="skeleton-actions"></div></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-header"><div class="skeleton-badge"></div><div class="skeleton-actions"></div></div>
+                    <div class="skeleton-line"></div>
+                    <div class="skeleton-line short"></div>
+                </div>
+                <p style="text-align: center; color: var(--text-muted); margin-top: 1.5rem;">Fetching BigQuery release notes...</p>
             </div>
 
             <!-- Error State -->
@@ -128,6 +137,7 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button class="btn btn-secondary" id="trim-tweet" style="margin-right: auto;" title="Intelligently shorten description to fit 280 character limit">Auto-Trim ✂️</button>
                 <button class="btn btn-secondary" id="cancel-tweet">Cancel</button>
                 <button class="btn btn-twitter" id="publish-tweet">
                     <span class="twitter-icon">🐦</span> Tweet Now
@@ -146,6 +156,11 @@
                 </button>
             </div>
         </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-notification" class="toast-container">
+        <span id="toast-message">Action completed</span>
     </div>
 
     <!-- Script file -->
