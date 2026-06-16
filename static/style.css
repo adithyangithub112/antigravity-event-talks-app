@@ -783,3 +783,188 @@ body {
     font-size: 0.8rem;
     color: var(--text-muted);
 }
+
+/* ==========================================================================
+   Light Mode Variables Override
+   ========================================================================== */
+body.light-theme {
+    --bg-dark: #f8fafc;
+    --bg-card: rgba(255, 255, 255, 0.75);
+    --bg-card-hover: rgba(241, 245, 249, 0.95);
+    --border-color: rgba(15, 23, 42, 0.08);
+    --border-hover: rgba(15, 23, 42, 0.16);
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    
+    --primary: #0ea5e9;
+    --primary-glow: rgba(14, 165, 233, 0.08);
+    --primary-gradient: linear-gradient(135deg, #0ea5e9, #4f46e5);
+    
+    --accent-feature-bg: rgba(52, 211, 153, 0.12);
+    --accent-issue-bg: rgba(248, 113, 113, 0.12);
+    --accent-change-bg: rgba(251, 191, 36, 0.12);
+    --accent-other-bg: rgba(192, 132, 252, 0.12);
+}
+
+body.light-theme .glow-bg {
+    background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(99, 102, 241, 0.02) 50%, rgba(0,0,0,0) 100%);
+}
+
+body.light-theme .logo-text h1 {
+    background: linear-gradient(to right, #0f172a, #334155);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+body.light-theme .modal-card {
+    background-color: #ffffff;
+    border-color: var(--border-color);
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+}
+
+body.light-theme .modal-overlay {
+    background-color: rgba(15, 23, 42, 0.4);
+}
+
+body.light-theme #tweet-textarea {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    border-color: var(--border-color);
+}
+
+body.light-theme .modal-footer {
+    background-color: #f8fafc;
+}
+
+body.light-theme .close-modal-btn:hover {
+    color: #0f172a;
+}
+
+body.light-theme .floating-action-bar {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: var(--primary);
+    box-shadow: 0 8px 30px rgba(14, 165, 233, 0.15);
+}
+
+body.light-theme .bar-text {
+    color: #0f172a;
+}
+
+body.light-theme .update-card.selected .checkbox-circle {
+    color: #ffffff;
+}
+
+/* ==========================================================================
+   Theme Switch & Copy Button Styles
+   ========================================================================== */
+.theme-switch-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.4rem 0.8rem;
+    border-radius: 99px;
+    border: 1px solid var(--border-color);
+}
+
+body.light-theme .theme-switch-container {
+    background: rgba(15, 23, 42, 0.03);
+}
+
+.theme-icon {
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+}
+
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.2);
+    transition: .4s;
+    border-radius: 34px;
+}
+
+body.light-theme .slider {
+    background-color: rgba(15, 23, 42, 0.15);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: var(--primary);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(16px);
+}
+
+/* Micro Copy Button inside Card */
+.btn-copy-micro {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: var(--transition-smooth);
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+}
+
+.btn-copy-micro:hover {
+    color: var(--primary);
+    background-color: var(--primary-glow);
+}
+
+.btn-copy-micro.copied {
+    color: var(--accent-feature) !important;
+}
+
+/* Adjustments for theme toggle alignment in header */
+@media (max-width: 768px) {
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+    .header-actions {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+}

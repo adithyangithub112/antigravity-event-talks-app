@@ -26,10 +26,21 @@
                 </div>
             </div>
             <div class="header-actions">
+                <div class="theme-switch-container">
+                    <span class="theme-icon">🌙</span>
+                    <label class="theme-switch" for="theme-toggle">
+                        <input type="checkbox" id="theme-toggle" aria-label="Toggle Theme">
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="theme-icon">☀️</span>
+                </div>
                 <div class="last-updated-container">
                     <span class="dot"></span>
                     <span id="last-updated-time">Never refreshed</span>
                 </div>
+                <button id="export-csv-btn" class="btn btn-secondary" title="Export current list to CSV">
+                    <span class="btn-text">Export CSV 📥</span>
+                </button>
                 <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
                     <span class="spinner" id="refresh-spinner"></span>
                     <span class="btn-text">Refresh Feed</span>

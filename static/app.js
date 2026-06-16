@@ -39,7 +39,11 @@ const elements = {
     
     floatingShareBar: document.getElementById('floating-share-bar'),
     floatingCount: document.getElementById('floating-count'),
-    tweetSelectedBtn: document.getElementById('tweet-selected-btn')
+    tweetSelectedBtn: document.getElementById('tweet-selected-btn'),
+    
+    // New Elements
+    themeToggle: document.getElementById('theme-toggle'),
+    exportCsvBtn: document.getElementById('export-csv-btn')
 };
 
 // Initialize App
@@ -52,6 +56,30 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     elements.refreshBtn.addEventListener('click', () => loadReleases());
     elements.retryBtn.addEventListener('click', () => loadReleases());
+    
+    // Theme Switch Toggle
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        if (elements.themeToggle) elements.themeToggle.checked = true;
+    }
+    
+    if (elements.themeToggle) {
+        elements.themeToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                document.body.classList.add('light-theme');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.classList.remove('light-theme');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    }
+
+    // Export CSV
+    if (elements.exportCsvBtn) {
+        elements.exportCsvBtn.addEventListener('click', () => exportToCSV());
+    }
     
     // Filters
     elements.searchInput.addEventListener('input', (e) => {
@@ -249,12 +277,32 @@ function createReleaseDayDOM(dayRelease, matchedUpdates) {
             openTweetModalForSingle(dayRelease.title, update);
         });
         
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'btn-copy-micro';
+        copyBtn.title = 'Copy text to clipboard';
+        copyBtn.innerHTML = '📋';
+        copyBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Don't trigger card selection
+            navigator.clipboard.writeText(update.text).then(() => {
+                copyBtn.innerHTML = '✔';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.innerHTML = '📋';
+                    copyBtn.classList.remove('copied');
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        });
+        
         const checkbox = document.createElement('div');
         checkbox.className = 'checkbox-circle';
         checkbox.innerHTML = '✓';
         
         cardActions.appendChild(tweetBtn);
+        cardActions.appendChild(copyBtn);
         cardActions.appendChild(checkbox);
+        
         cardHeader.appendChild(badge);
         cardHeader.appendChild(cardActions);
         card.appendChild(cardHeader);
@@ -388,4 +436,70 @@ function openTweetModalForSelection() {
     }
     
     showTweetModal(tweetText);
+}
+
+// Export filtered updates to CSV
+function exportToCSV() {
+    if (state.releases.length === 0) {
+        alert('No data to export.');
+        return;
+    }
+    
+    let csvRows = [];
+    // CSV Header
+    csvRows.push(['Date', 'Type', 'Description', 'Link'].map(val => `"${val.replace(/"/g, '""')}"`).join(','));
+    
+    state.releases.forEach(dayRelease => {
+        const matchedUpdates = dayRelease.updates.filter(update => {
+            // Apply current filters
+            if (state.filters.type !== 'ALL') {
+                if (state.filters.type === 'Other') {
+                    const knownTypes = ['Feature', 'Issue', 'Change', 'Deprecation'];
+                    if (knownTypes.includes(update.type)) return false;
+                } else if (state.filters.type === 'Change') {
+                    if (update.type !== 'Change' && update.type !== 'Deprecation') return false;
+                } else if (update.type !== state.filters.type) {
+                    return false;
+                }
+            }
+            
+            if (state.filters.search) {
+                const searchMatch = update.text.toLowerCase().includes(state.filters.search) || 
+                                    update.type.toLowerCase().includes(state.filters.search) ||
+                                    dayRelease.title.toLowerCase().includes(state.filters.search);
+                if (!searchMatch) return false;
+            }
+            
+            return true;
+        });
+        
+        matchedUpdates.forEach(update => {
+            const dateVal = dayRelease.title;
+            const typeVal = update.type;
+            const descVal = update.text;
+            const linkVal = dayRelease.link;
+            
+            const row = [dateVal, typeVal, descVal, linkVal].map(val => {
+                const escaped = (val || '').replace(/"/g, '""');
+                return `"${escaped}"`;
+            });
+            csvRows.push(row.join(','));
+        });
+    });
+    
+    if (csvRows.length <= 1) {
+        alert('No filtered updates match the criteria to export.');
+        return;
+    }
+    
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `bigquery_release_notes_${new Date().toISOString().slice(0,10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
