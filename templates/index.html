@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Hub</title>
+    <meta name="description" content="View and tweet recent BigQuery release notes and features in a sleek dashboard.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo-area">
+                <span class="logo-icon">⚡</span>
+                <div class="logo-text">
+                    <h1>BigQuery</h1>
+                    <span class="sub-logo">Release Notes Tracker</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="last-updated-container">
+                    <span class="dot"></span>
+                    <span id="last-updated-time">Never refreshed</span>
+                </div>
+                <button id="refresh-btn" class="btn btn-primary" title="Refresh Release Notes">
+                    <span class="spinner" id="refresh-spinner"></span>
+                    <span class="btn-text">Refresh Feed</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Control Panel -->
+        <section class="control-panel" id="controls">
+            <div class="search-wrapper">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="search-input" placeholder="Search updates (e.g. Gemini, SQL, export)..." aria-label="Search updates">
+            </div>
+            
+            <div class="filter-wrapper">
+                <label for="type-filter">Type:</label>
+                <div class="select-container">
+                    <select id="type-filter" aria-label="Filter by release type">
+                        <option value="ALL">All Types</option>
+                        <option value="Feature">Features</option>
+                        <option value="Issue">Issues</option>
+                        <option value="Change">Changes / Deprecations</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="stats-banner" style="display: none;">
+            <div class="stat-item"><span class="stat-count" id="total-days">0</span> Days of Updates</div>
+            <div class="stat-item"><span class="stat-count" id="total-updates">0</span> Total Release Items</div>
+            <div class="stat-item selected-count-wrapper" id="selected-counter" style="display: none;">
+                <span class="stat-count" id="selected-num">0</span> Selected for Tweet
+                <button id="clear-selected-btn" class="btn-text-only">Clear</button>
+            </div>
+        </div>
+
+        <!-- Main Feed -->
+        <main class="feed-container">
+            <!-- Loading State -->
+            <div id="feed-loading" class="state-container">
+                <div class="large-spinner"></div>
+                <p>Fetching BigQuery release notes...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="feed-error" class="state-container" style="display: none;">
+                <div class="error-icon">⚠️</div>
+                <h2>Failed to Load Feed</h2>
+                <p id="error-message">Something went wrong while connecting to the server.</p>
+                <button id="retry-btn" class="btn btn-secondary">Retry Connection</button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="feed-empty" class="state-container" style="display: none;">
+                <div class="empty-icon">📂</div>
+                <h2>No Updates Found</h2>
+                <p>Try adjusting your search query or filter options.</p>
+            </div>
+
+            <!-- Releases List -->
+            <div id="releases-list" class="releases-list"></div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>BigQuery Release Notes Tracker &copy; 2026. Data sourced from official Google Cloud feeds.</p>
+        </footer>
+    </div>
+
+    <!-- Twitter Draft Modal -->
+    <div class="modal-overlay" id="tweet-modal" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Draft your Tweet</h3>
+                <button class="close-modal-btn" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-tip">Edit your tweet before sending. A link to the release notes will automatically be appended.</p>
+                <textarea id="tweet-textarea" rows="6" maxlength="280"></textarea>
+                <div class="tweet-metadata">
+                    <span id="char-counter">0 / 280</span>
+                    <span class="warn-msg" id="char-warn" style="display: none;">Exceeds Twitter 280-char limit!</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-tweet">Cancel</button>
+                <button class="btn btn-twitter" id="publish-tweet">
+                    <span class="twitter-icon">🐦</span> Tweet Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Bar for Selected Tweets -->
+    <div class="floating-action-bar" id="floating-share-bar" style="display: none;">
+        <div class="bar-content">
+            <span class="bar-text"><strong id="floating-count">1</strong> update selected</span>
+            <div class="bar-actions">
+                <button class="btn btn-twitter" id="tweet-selected-btn">
+                    <span class="twitter-icon">🐦</span> Tweet Selection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script file -->
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
